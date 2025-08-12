@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { addMonths, subMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from 'date-fns';
 import { el, ja } from 'date-fns/locale';
 
-
 type ModalProps = {
   open: boolean;
   onClose: () => void;
