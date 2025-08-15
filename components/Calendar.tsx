@@ -3,43 +3,30 @@ import { useEffect, useState } from 'react';
 import { addMonths, subMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from 'date-fns';
 import { el, ja } from 'date-fns/locale';
 
-type ModalProps = {
-  open: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
-};
-
-function Modal({ open, onClose, title, children }: ModalProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
+function Modal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white w-full max-w-md rounded-xl shadow p-6" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-        {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
-        {children}
-        <div className="mt-6 flex justify-end">
-          <button className="px-4 py-2 rounded bg-gray-200" onClick={onClose}>閉じる</button>
+      <div className="fixed inset-0 z-50 bg-black/40">
+        <div className="fixed left-1/2 top-24 -translate-x-1/2 bg-white p-4 rounded shadow w-96">
+            <h2 className="text-xl font-bold mb-4">タイトル</h2>
+            <p>内容</p>
+            <button
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+            onClick={onClose}
+            >
+            閉じる
+            </button>
         </div>
-      </div>
-    </div>
+     </div>
   );
 }
+
 
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [elements, setElements] = useState<Record<string, React.ReactNode>>({});
+  const [isOpen, setIsOpen] = useState(false);
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -51,22 +38,22 @@ export default function Calendar() {
 
   const dateFormat = 'd';
   const rows = [];
+  const weekdays = 7;
   let days = [];
-  let day = startDate;
 
-  while (day <= endDate) {
-    for (let i = 0; i < 7; i++) {
+  for (let day = startDate; day <= endDate; day = addDays(day, 1)) {
+    for (let i = 0; i < weekdays; i++) {
       const cloneDay = day;
       const key = format(cloneDay, 'yyyy-MM-dd');
       days.push(
-        <button
-          key={day.toString()}
-          className={`p-2 h-30 w-full border ${!isSameMonth(day, monthStart) ? 'text-gray-400' : ''}`}
-          onClick={() => setElements({[key]: <div className={`p-2 h-10 w-full bg-blue-500 text-white`}>予定</div>})}
-        >
-          {format(day, dateFormat, { locale: ja })}
-          {elements[key]}
-        </button>
+            <button
+            key={day.toString()}
+            className={`p-2 h-30 w-full border ${!isSameMonth(day, monthStart) ? 'text-gray-400' : ''}`}
+            onClick={() => {setElements({[key]: <div className={`p-2 h-10 w-full bg-blue-500 text-white`}>予定</div>}), setIsOpen(true);}}
+            >
+            {format(day, dateFormat, { locale: ja })}
+            {elements[key]}
+            </button>    
       );
       day = addDays(day, 1);
     }
@@ -97,6 +84,7 @@ export default function Calendar() {
         <div>土</div>
       </div>
       {rows}
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </div>
   );
 }
