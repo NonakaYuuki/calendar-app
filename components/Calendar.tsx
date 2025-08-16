@@ -3,12 +3,18 @@ import { useEffect, useState } from 'react';
 import { addMonths, subMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from 'date-fns';
 import { el, ja } from 'date-fns/locale';
 
-function Modal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function Modal({ isOpen, position, onClose }: { isOpen: boolean; position: {x: number, y: number}; onClose: () => void }) {
   if (!isOpen) return null;
 
   return (
-      <div className="fixed inset-0 z-50 bg-black/40">
-        <div className="fixed left-1/2 top-24 -translate-x-1/2 bg-white p-4 rounded shadow w-96">
+      <div className="fixed inset-0 z-50" onClick={onClose}>
+        <div 
+        className="fixed bg-white p-4 rounded shadow w-96" 
+        style={{
+          left : position.x > 900 ? position.x - 580 : position.x,
+          top : position.y,
+        }}
+        onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4">タイトル</h2>
             <p>内容</p>
             <button
@@ -27,6 +33,7 @@ export default function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [elements, setElements] = useState<Record<string, React.ReactNode>>({});
   const [isOpen, setIsOpen] = useState(false);
+  const [posi, setPosi] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -40,6 +47,7 @@ export default function Calendar() {
   const rows = [];
   const weekdays = 7;
   let days = [];
+  console.log(posi.x, posi.y);
 
   for (let day = startDate; day <= endDate; day = addDays(day, 1)) {
     for (let i = 0; i < weekdays; i++) {
@@ -49,13 +57,20 @@ export default function Calendar() {
             <button
             key={day.toString()}
             className={`p-2 h-30 w-full border ${!isSameMonth(day, monthStart) ? 'text-gray-400' : ''}`}
-            onClick={() => {setElements({[key]: <div className={`p-2 h-10 w-full bg-blue-500 text-white`}>予定</div>}), setIsOpen(true);}}
+            onClick={(e) => {
+                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                setElements({[key]: <div className={`p-2 h-10 w-full bg-blue-500 text-white`}>予定</div>}); 
+                setIsOpen(true); 
+                setPosi({x: rect.right, y: rect.top});
+            }}
             >
             {format(day, dateFormat, { locale: ja })}
             {elements[key]}
             </button>    
       );
-      day = addDays(day, 1);
+      if (i != weekdays - 1) {
+        day = addDays(day, 1);
+      }
     }
     rows.push(
       <div className="grid grid-cols-7" key={day.toString()}>
@@ -84,7 +99,7 @@ export default function Calendar() {
         <div>土</div>
       </div>
       {rows}
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <Modal isOpen={isOpen} position={posi} onClose={() => setIsOpen(false)} />
     </div>
   );
 }
