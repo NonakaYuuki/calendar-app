@@ -24,6 +24,30 @@ function Modal({
   position: { x: number; y: number };
   onClose: () => void;
 }) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
+  const handleSave = async () => {
+    if (!title || !content || !startDate || !endDate) {
+      alert('すべてのフィールドを入力してください');
+      return;
+    }
+    const payload = {
+      title,
+      content,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+
+    console.log('保存:', payload);
+    setTitle('');
+    setContent('');
+    setStartDate(null);
+    setEndDate(null);
+    onClose();
+  };
   if (!isOpen) return null;
 
   return (
@@ -36,11 +60,41 @@ function Modal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold mb-4">タイトル</h2>
-        <p>内容</p>
-        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded" onClick={onClose}>
-          閉じる
-        </button>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="タイトルを入力"
+          className="w-full p-2 mb-2 border rounded"
+        />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="内容を入力"
+          className="w-full p-2 mb-2 border rounded"
+        />
+        <div className="flex space-x-2">
+          <input
+            type="date"
+            value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+            onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
+            className="p-2 border rounded w-full"
+          />
+          <input
+            type="date"
+            value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+            onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+            className="p-2 border rounded w-full"
+          />
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button className="px-4 py-2 border rounded" onClick={onClose}>
+            キャンセル
+          </button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded" onClick={handleSave}>
+            保存
+          </button>
+        </div>
       </div>
     </div>
   );
