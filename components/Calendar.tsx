@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { addMonths, subMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from 'date-fns';
+import { addMonths, subMonths, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, set } from 'date-fns';
 import { el, ja } from 'date-fns/locale';
 
 function Modal({ isOpen, position, onClose }: { isOpen: boolean; position: {x: number, y: number}; onClose: () => void }) {
@@ -34,9 +34,39 @@ export default function Calendar() {
   const [elements, setElements] = useState<Record<string, React.ReactNode>>({});
   const [isOpen, setIsOpen] = useState(false);
   const [posi, setPosi] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [startDay, setStartDay] = useState<Date | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+  const handleMouseDown = (day: Date) => {
+    setStartDay(day);
+    setIsDragging(true);
+  }
+  const handleMouseEnter = (day: Date) => {
+    if (isDragging && startDay) {
+        let newElements: Record<string, React.ReactNode> = {};
+        if (startDay < day){
+            for (let d = startDay; d <= day; d = addDays(d, 1)) {
+                const key = format(d, 'yyyy-MM-dd');
+                newElements[key] = <div className={`p-2 h-5 w-full bg-blue-500 text-white`}></div>;
+            }
+        }
+        else {
+            for (let d = day; d <= startDay; d = addDays(d, 1)) {
+                const key = format(d, 'yyyy-MM-dd');
+                newElements[key] = <div className={`p-2 h-5 w-full bg-blue-500 text-white`}></div>;
+            }
+        }
+        console.log(newElements);
+        setElements(newElements);
+    }
+    }
+    const handleMouseUp = () => {
+    setIsDragging(false);
+    setStartDay(null);
+    setIsOpen(true);
+  }
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -47,7 +77,6 @@ export default function Calendar() {
   const rows = [];
   const weekdays = 7;
   let days = [];
-  console.log(posi.x, posi.y);
 
   for (let day = startDate; day <= endDate; day = addDays(day, 1)) {
     for (let i = 0; i < weekdays; i++) {
@@ -56,10 +85,13 @@ export default function Calendar() {
       days.push(
             <button
             key={day.toString()}
+            onMouseDown={() => handleMouseDown(cloneDay)}
+            onMouseEnter={() => handleMouseEnter(cloneDay)}
+            onMouseUp={handleMouseUp}
             className={`p-2 h-30 w-full border ${!isSameMonth(day, monthStart) ? 'text-gray-400' : ''}`}
             onClick={(e) => {
                 const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                setElements({[key]: <div className={`p-2 h-10 w-full bg-blue-500 text-white`}>予定</div>}); 
+                setElements({[key]: <div className={`p-2 h-5 w-full bg-blue-500 text-white`}></div>}); 
                 setIsOpen(true); 
                 setPosi({x: rect.right, y: rect.top});
             }}
@@ -99,7 +131,7 @@ export default function Calendar() {
         <div>土</div>
       </div>
       {rows}
-      <Modal isOpen={isOpen} position={posi} onClose={() => setIsOpen(false)} />
+      <Modal isOpen={isOpen} position={posi} onClose={() => {setIsOpen(false); setElements({});}} />
     </div>
   );
 }
