@@ -34,19 +34,43 @@ function Modal({
       alert('すべてのフィールドを入力してください');
       return;
     }
-    const payload = {
-      title,
-      content,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    };
 
-    console.log('保存:', payload);
-    setTitle('');
-    setContent('');
-    setStartDate(null);
-    setEndDate(null);
-    onClose();
+    const startAt = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate(),
+      0,
+      0,
+      0,
+    ).toISOString();
+    const endAt = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate(),
+      23,
+      59,
+      59,
+    ).toISOString();
+
+    const payload = { title, content, startAt, endAt };
+
+    try {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+      const res = await fetch(`${base}/schedule/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`保存に失敗しました (${res.status}) ${await res.text()}`);
+      setTitle('');
+      setContent('');
+      setStartDate(null);
+      setEndDate(null);
+      onClose();
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message ?? '保存時にエラーが発生しました');
+    }
   };
   if (!isOpen) return null;
 
